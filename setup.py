@@ -9,9 +9,9 @@ setup(
 	author='TheNovi',
 	author_email='jakub.novi.novacek@gmail.com',
 	description='',
-	packages=['chika'],
+	packages=['chika', 'chika.ncui3'],
 	# package_data={'': ['conf.json']}, # NOSONAR
-	install_requires=['PyInstaller'],
+	install_requires=['PyInstaller'],  # , 'nui @ git+git://github.com/TheNovi/Nui.git'
 	entry_points={
 		'console_scripts': ['chika=chika.__main__:main'],
 	},
