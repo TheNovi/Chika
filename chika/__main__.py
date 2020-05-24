@@ -15,19 +15,20 @@ from chika.project import Project
 class Ncui(Api):
 	def __init__(self):
 		super().__init__()
-		self.conf_path = os_path.join(sys_path[-1], 'chika', 'conf.json')
+		self.conf_path = os_path.join(sys_path[-1], 'chika')
 		self.global_conf = self.load()
 		self.project: Union[Project, None] = None
 
 	def load(self) -> GlobalConf:
-		if os_path.exists(self.conf_path):
-			with open(self.conf_path) as f:
+		p = os_path.join(self.conf_path, 'conf.json')
+		if os_path.exists(p):
+			with open(p) as f:
 				return GlobalConf(json.load(f))
 		else:
 			return GlobalConf({})
 
 	def save(self):
-		with open(self.conf_path, 'w') as f:
+		with open(os_path.join(self.conf_path, 'conf.json'), 'w') as f:
 			json.dump(self.global_conf.save(), f, indent=True)
 
 	def set_commands(self):
@@ -64,12 +65,73 @@ class Ncui(Api):
 				return self.rc.quick(f'Key: \'{k}\' not found', RetCode.ARGS_ERROR)
 			return self.rc.quick()
 
+		@self.com(Com('initp ip', man="""initp <path> <name>\nAdds new project and run cscript"""))  # TODO option with default path=. (only 1 arg: name)
+		def initp():
+			if len(self.rc.args) != 3:
+				return self.rc.quick(f'2 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
+			self.project = Project(self.global_conf, self.rc.get_arg(1), self.rc.get_arg(2))
+			p = os_path.join(self.conf_path, 'cscript.txt')
+			if os_path.exists(p):
+				with open(p) as f:
+					cs = f.read()
+			else:
+				cs = default_cscript
+				with open(p, 'w') as f:
+					f.write(cs)
+			self.project.run_cscript(cs, self.conf_path)
+
 
 def main():
 	n = Ncui()
+	# n.quick_run('ip . Qwer')
 	n.quick_run_loop()
 	n.save()
 
+
+default_cscript = """# Type # to comment line (works only at the start of the line)
+# Your pwd/cwd is set project path
+# All commads are going to be executed as batch script
+# Dont forget: window uses \\ as path separator
+# Here are some useful commands:
+# cd/chdir - change current pwd/cwd
+# md/mkdir - makes new directory
+# rd/rmdir /Q /S - removes none empty directory
+# ren/rename - rename directory
+
+@echo off
+md {:name
+cd {:name
+	md {:lname
+	cd {:lname
+		echo def main():>> __main__.py
+		echo 	print("Hello world!")>> __main__.py
+		echo.>> __main__.py
+		echo.>> __main__.py
+		echo if __name__ == '__main__':>> __main__.py
+		echo 	main()>> __main__.py
+	cd ..
+	md doc
+		cd doc
+		md dev
+		md usr
+	cd ..
+	echo [[source]] >> Pipfile
+	echo name = "pypi">> Pipfile
+	echo url = "https://pypi.org/simple">> Pipfile
+	echo verify_ssl = true>> Pipfile
+	echo.>> Pipfile 
+	echo [dev-packages]>> Pipfile
+	echo.>> Pipfile 
+	echo [packages]>> Pipfile
+	echo pyinstaller = "*">> Pipfile
+	echo.>> Pipfile 
+	echo [requires]>> Pipfile
+	echo python_version = "3.8">> Pipfile
+
+	echo # {:name>> README.md
+	# TODO Licence
+echo cscript done
+"""
 
 if __name__ == '__main__':
 	main()
