@@ -1,0 +1,16 @@
+.idea/
+.vscode/
+__pycache__/
+venv/
+out/
+nudes/
+.chika
+build.bat
+server.bat
+main.exe
+ptest*
+*.spec
+*.iml
+*.dll
+*.db
+*.log
