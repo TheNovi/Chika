@@ -1,4 +1,5 @@
 import json
+import subprocess
 from os import path as os_path
 from sys import path as sys_path
 from typing import Union
@@ -64,6 +65,10 @@ class Ncui(Api):
 			else:
 				return self.rc.quick(f'Key: \'{k}\' not found', RetCode.ARGS_ERROR)
 			return self.rc.quick()
+
+		@self.com(Com('cscript cs', man="""cscript\nOpen cscript"""))
+		def cscript():
+			subprocess.run(f'{self.global_conf.open_text} cscript.txt', cwd=self.conf_path, shell=True)
 
 		@self.com(Com('initp ip', man="""initp <path> <name>\nAdds new project and run cscript"""))  # TODO option with default path=. (only 1 arg: name)
 		def initp():
