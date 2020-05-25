@@ -20,6 +20,9 @@ class Ncui(Api):
 		self.global_conf = self.load()
 		self.project: Union[Project, None] = None
 
+	def path(self):
+		return self.project.name if self.project else ''
+
 	def load(self) -> GlobalConf:
 		p = os_path.join(self.conf_path, 'conf.json')
 		if os_path.exists(p):
@@ -38,6 +41,19 @@ class Ncui(Api):
 		@self.com(Com('version v', man="""version\nPrints Chika version."""))
 		def version():
 			return self.rc.quick(f'Chika v{pkg_resources.require("chika")[0].version}')
+
+		@self.com(Com('ls lp', man="""ls\nPrints all saved projects"""))
+		def list_projects():
+			o = []
+			for p in self.global_conf.projects:
+				if os_path.exists(p):
+					if os_path.exists(os_path.join(p, '.chika')):
+						o.append(os_path.basename(p))
+					else:
+						o.append(os_path.basename(p) + ' (missing .chika file)')
+				else:
+					o.append(p + ' (invalid path)')
+			return self.rc.quick('\n'.join(o))
 
 		@self.com(Com('printg pg', man="""printg\nPrints global config."""))
 		def printg():
@@ -64,6 +80,7 @@ class Ncui(Api):
 				self.global_conf.open_web = self.rc.get_arg(2)
 			else:
 				return self.rc.quick(f'Key: \'{k}\' not found', RetCode.ARGS_ERROR)
+			self.save()
 			return self.rc.quick()
 
 		@self.com(Com('cscript cs', man="""cscript\nOpen cscript"""))
@@ -74,7 +91,7 @@ class Ncui(Api):
 		def initp():
 			if len(self.rc.args) != 3:
 				return self.rc.quick(f'2 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
-			self.project = Project(self.global_conf, self.rc.get_arg(1), self.rc.get_arg(2))
+			self.project = Project(self.global_conf, os_path.join(self.rc.get_arg(1), self.rc.get_arg(2)))
 			p = os_path.join(self.conf_path, 'cscript.txt')
 			if os_path.exists(p):
 				with open(p) as f:
@@ -84,6 +101,10 @@ class Ncui(Api):
 				with open(p, 'w') as f:
 					f.write(cs)
 			self.project.run_cscript(cs, self.conf_path)
+			self.project.save()
+			if self.project.path not in self.global_conf.projects:
+				self.global_conf.projects.append(self.project.path)
+			self.save()
 
 
 def main():
