@@ -45,14 +45,14 @@ class Ncui(Api):
 		@self.com(Com('ls lp', man="""ls\nPrints all saved projects"""))
 		def list_projects():
 			o = []
-			for p in self.global_conf.projects:
+			for i, p in enumerate(self.global_conf.projects):
 				if os_path.exists(p):
 					if os_path.exists(os_path.join(p, '.chika')):
-						o.append(os_path.basename(p))
+						o.append(f'{i}: {os_path.basename(p)}')
 					else:
-						o.append(os_path.basename(p) + ' (missing .chika file)')
+						o.append(f'{i}: {os_path.basename(p)} - (missing .chika file)')
 				else:
-					o.append(p + ' (invalid path)')
+					o.append(f'{i}: {os_path.basename(p)} - (invalid path)')
 			return self.rc.quick('\n'.join(o))
 
 		@self.com(Com('printg pg', man="""printg\nPrints global config."""))
@@ -104,6 +104,30 @@ class Ncui(Api):
 			self.project.save()
 			if self.project.path not in self.global_conf.projects:
 				self.global_conf.projects.append(self.project.path)
+			self.save()
+
+		@self.com(Com('add a', man="""add <path>\nAdds new project"""))  # TODO option with default path=.
+		def add():
+			if len(self.rc.args) != 2:
+				return self.rc.quick(f'1 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
+			p = Project(self.global_conf, self.rc.get_arg(1))
+			if p.path in self.global_conf.projects:
+				return self.rc.error('Project already added')
+			if not os_path.exists(p.path):
+				return self.rc.error('Specified project path does not exists: ' + p.path)
+			self.project = p
+			self.project.save()
+			self.global_conf.projects.append(self.project.path)
+			self.save()
+
+		@self.com(Com('rm del', man="""rm <ls_id: int>\nRemoves project from ls list.\nProject folder stays intact."""))
+		def add():
+			if len(self.rc.args) != 2:
+				return self.rc.quick(f'1 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
+			i = self.rc.get_arg(1, -1, method=int)
+			if i < 0:
+				return self.rc.error('ls_id must be int: 0 <= ls_id < number_of_projects')
+			del self.global_conf.projects[i]
 			self.save()
 
 
