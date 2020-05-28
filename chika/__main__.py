@@ -120,14 +120,25 @@ class Ncui(Api):
 			self.global_conf.projects.append(self.project.path)
 			self.save()
 
-		@self.com(Com('rm del', man="""rm <ls_id: int>\nRemoves project from ls list.\nProject folder stays intact."""))
+		@self.com(Com('rm del', man="""rm <ls_id: int>\nRemoves project from ls list\nProject folder stays intact"""))
 		def add():
 			if len(self.rc.args) != 2:
 				return self.rc.quick(f'1 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
 			i = self.rc.get_arg(1, -1, method=int)
-			if i < 0:
+			if 0 > i or i >= len(self.global_conf.projects):
 				return self.rc.error('ls_id must be int: 0 <= ls_id < number_of_projects')
 			del self.global_conf.projects[i]
+			self.save()
+
+		@self.com(Com('oid openid', man="""openid <ls_id: int>\nOpen project"""))
+		def openid_():
+			if len(self.rc.args) != 2:
+				return self.rc.quick(f'1 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
+			i = self.rc.get_arg(1, -1, method=int)
+			if 0 > i or i >= len(self.global_conf.projects):
+				return self.rc.error('ls_id must be int: 0 <= ls_id < number_of_projects')
+			self.project = Project(self.global_conf, self.global_conf.projects[i])
+			self.project.save()
 			self.save()
 
 
