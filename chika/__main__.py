@@ -151,6 +151,24 @@ class Ncui(Api):
 			self.project.save()
 			self.save()
 
+		# In project
+		def sel_project():
+			return self.rc.error('No project opened')
+
+		@self.com(Com('folder f', man="""folder\nOpen project folder"""))
+		def folder():
+			if not self.project:
+				return sel_project()
+			if not os_path.exists(self.project.path):
+				return self.rc.error('Project folder does not exist')
+			self.project.open_folder(self.global_conf.open_folder)
+
+		@self.com(Com('github gh', man="""github\nOpen github page"""))
+		def github():
+			if not self.project:
+				return sel_project()
+			self.project.open_github(self.global_conf.open_web)
+
 
 def main():
 	n = Ncui()

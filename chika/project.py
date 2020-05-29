@@ -33,3 +33,9 @@ class Project:
 				json.dump(self.conf.save(), f)
 		else:
 			print("Cant save project: " + self.name)
+
+	def open_folder(self, open_folder):
+		subprocess.run(f'{open_folder} {self.path}')
+
+	def open_github(self, open_web):
+		subprocess.run(f'{open_web} https://github.com/{self.conf.github}/{self.name}')
