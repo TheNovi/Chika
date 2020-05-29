@@ -2,7 +2,7 @@ import json
 import subprocess
 from os import path as os_path
 from sys import path as sys_path
-from typing import Union
+from typing import Optional
 
 import pkg_resources
 
@@ -18,10 +18,7 @@ class Ncui(Api):
 		super().__init__()
 		self.conf_path = os_path.join(sys_path[-1], 'chika')
 		self.global_conf = self.load()
-		self.project: Union[Project, None] = None
-
-	def path(self):
-		return self.project.name if self.project else ''
+		self.project: Optional[Project] = self.in_project_dir()
 
 	def load(self) -> GlobalConf:
 		p = os_path.join(self.conf_path, 'conf.json')
@@ -34,6 +31,17 @@ class Ncui(Api):
 	def save(self):
 		with open(os_path.join(self.conf_path, 'conf.json'), 'w') as f:
 			json.dump(self.global_conf.save(), f, indent=True)
+
+	def in_project_dir(self) -> Optional[Project]:  # TODO (Zero priority) Fix for linux (\\ -> /)
+		for p in self.global_conf.projects:
+			if f"{os_path.realpath('.')}\\".startswith(os_path.realpath(p) + '\\'):
+				o = Project(self.global_conf, p)
+				o.save()
+				return o
+		return None
+
+	def path(self):
+		return self.project.name if self.project else ''
 
 	def set_commands(self):
 		self.com(Com('e q exit quit', self.rc.quick, None, {'code': RetCode.EXIT}, man="""exit\nExit from chika shell"""))
@@ -54,6 +62,10 @@ class Ncui(Api):
 				else:
 					o.append(f'{i}: {os_path.basename(p)} - (invalid path)')
 			return self.rc.quick('\n'.join(o))
+
+		@self.com(Com('printp pp', man="""printp <path='.'>\nPrints real path (Same path will be parsed as project path)"""))
+		def printp():
+			return self.rc.quick(os_path.realpath(self.rc.get_arg(1, '.')))
 
 		@self.com(Com('printg pg', man="""printg\nPrints global config."""))
 		def printg():
@@ -106,11 +118,9 @@ class Ncui(Api):
 				self.global_conf.projects.append(self.project.path)
 			self.save()
 
-		@self.com(Com('add a', man="""add <path>\nAdds new project"""))  # TODO option with default path=.
+		@self.com(Com('add', man="""add <path='.'>\nAdds new project"""))
 		def add():
-			if len(self.rc.args) != 2:
-				return self.rc.quick(f'1 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
-			p = Project(self.global_conf, self.rc.get_arg(1))
+			p = Project(self.global_conf, self.rc.get_arg(1, '.'))
 			if p.path in self.global_conf.projects:
 				return self.rc.error('Project already added')
 			if not os_path.exists(p.path):
@@ -144,6 +154,7 @@ class Ncui(Api):
 
 def main():
 	n = Ncui()
+	n.quick_run('version')
 	# n.quick_run('ip . Qwer')
 	n.quick_run_loop()
 	n.save()
