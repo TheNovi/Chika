@@ -8,7 +8,7 @@ from chika.conf import GlobalConf, ProjectConf
 class Project:
 	def __init__(self, gc: GlobalConf, path: str):
 		self.path: str = os_path.realpath(path)
-		self.conf: ProjectConf = gc.gen_project()
+		self.conf: ProjectConf = self.load(gc)
 
 	@property
 	def name(self):
@@ -33,6 +33,13 @@ class Project:
 				json.dump(self.conf.save(), f)
 		else:
 			print("Cant save project: " + self.name)
+
+	def load(self, gc: GlobalConf) -> ProjectConf:
+		if os_path.exists(os_path.join(self.path, '.chika')):
+			with open(os_path.join(self.path, '.chika')) as f:
+				return ProjectConf(json.load(f))
+		else:
+			return gc.gen_project()
 
 	def open_folder(self, open_folder):
 		subprocess.run(f'{open_folder} {self.path}')

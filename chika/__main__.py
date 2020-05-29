@@ -46,7 +46,7 @@ class Ncui(Api):
 	def set_commands(self):
 		self.com(Com('e q exit quit', self.rc.quick, None, {'code': RetCode.EXIT}, man="""exit\nExit from chika shell"""))
 
-		@self.com(Com('version v', man="""version\nPrints Chika version."""))
+		@self.com(Com('version v', man="""version\nPrints Chika version"""))
 		def version():
 			return self.rc.quick(f'Chika v{pkg_resources.require("chika")[0].version}')
 
@@ -63,11 +63,11 @@ class Ncui(Api):
 					o.append(f'{i}: {os_path.basename(p)} - (invalid path)')
 			return self.rc.quick('\n'.join(o))
 
-		@self.com(Com('printp pp', man="""printp <path='.'>\nPrints real path (Same path will be parsed as project path)"""))
-		def printp():
+		@self.com(Com('pwd', man="""pwd <path='.'>\nPrints real path (Same path will be parsed as project path)"""))
+		def pwd():
 			return self.rc.quick(os_path.realpath(self.rc.get_arg(1, '.')))
 
-		@self.com(Com('printg pg', man="""printg\nPrints global config."""))
+		@self.com(Com('printg pg', man="""printg\nPrints global config"""))
 		def printg():
 			o = []
 			for k in self.global_conf.save():
@@ -75,7 +75,7 @@ class Ncui(Api):
 					o.append(f'{k}: {self.global_conf.save()[k]}')
 			return self.rc.quick('\n'.join(o))
 
-		@self.com(Com('setg sg', man="""setg <key> <value>\nPrints global config."""))
+		@self.com(Com('setg sg', man="""setg <key> <value>\nSets project config value by key"""))
 		def setg():
 			if len(self.rc.args) != 3:
 				return self.rc.quick(f'2 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
@@ -154,6 +154,31 @@ class Ncui(Api):
 		# In project
 		def sel_project():
 			return self.rc.error('No project opened')
+
+		@self.com(Com('printp pp', man="""printp\nPrints project config"""))
+		def printp():
+			if not self.project:
+				return sel_project()
+			o = []
+			for k in self.project.conf.save():
+				o.append(f'{k}: {self.project.conf.save()[k]}')
+			return self.rc.quick('\n'.join(o))
+
+		@self.com(Com('setp sp', man="""setp <key> <value>\nSets project config value by key"""))
+		def setp():
+			if not self.project:
+				return sel_project()
+			if len(self.rc.args) != 3:
+				return self.rc.quick(f'2 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
+			k = self.rc.get_arg(1)
+			if k == 'build_path':
+				self.project.conf.build_path = self.rc.get_arg(2)
+			elif k == 'github':
+				self.project.conf.github = self.rc.get_arg(2)
+			else:
+				return self.rc.quick(f'Key: \'{k}\' not found', RetCode.ARGS_ERROR)
+			self.project.save()
+			return self.rc.quick()
 
 		@self.com(Com('folder f', man="""folder\nOpen project folder"""))
 		def folder():
