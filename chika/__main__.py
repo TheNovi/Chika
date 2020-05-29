@@ -103,6 +103,8 @@ class Ncui(Api):
 		def initp():
 			if len(self.rc.args) != 3:
 				return self.rc.quick(f'2 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
+			if os_path.exists(os_path.join(self.rc.get_arg(1), self.rc.get_arg(2))):
+				return self.rc.error('Project folder already exists (either use \'add\' commad or delete project folder)')
 			self.project = Project(self.global_conf, os_path.join(self.rc.get_arg(1), self.rc.get_arg(2)))
 			p = os_path.join(self.conf_path, 'cscript.txt')
 			if os_path.exists(p):
@@ -153,7 +155,7 @@ class Ncui(Api):
 
 		# In project
 		def sel_project():
-			return self.rc.error('No project opened')
+			return self.rc.quick('No project opened', RetCode.DENIED)
 
 		@self.com(Com('printp pp', man="""printp\nPrints project config"""))
 		def printp():
