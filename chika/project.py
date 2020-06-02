@@ -1,6 +1,9 @@
 import json
 import subprocess
 from os import path as os_path
+from shutil import rmtree
+
+from PyInstaller.__main__ import run as pyi_run
 
 from chika.conf import GlobalConf, ProjectConf
 
@@ -46,3 +49,11 @@ class Project:
 
 	def open_github(self, open_web):
 		subprocess.run(f'{open_web} https://github.com/{self.conf.github}/{self.name}')
+
+	def create_spec(self):
+		subprocess.run(f"pyi-makespec {os_path.join(self.path, self.name.lower(), '__main__.py')} -n={self.name}", cwd=self.path)
+
+	def build(self):
+		build_path = self.conf.build_path if self.conf.build_path else self.path
+		pyi_run(f"{os_path.join(self.path, f'{self.name.lower()}.spec')} --clean -y --workpath={os_path.join(build_path, 'build')} --distpath={os_path.join(build_path)}".split())
+		rmtree(os_path.join(self.conf.build_path, 'build'))

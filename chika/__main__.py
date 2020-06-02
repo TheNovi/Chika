@@ -196,11 +196,26 @@ class Ncui(Api):
 				return sel_project()
 			self.project.open_github(self.global_conf.open_web)
 
+		@self.com(Com('spec', man="""spec\nCreates spec file"""))  # TODO Overwrite main file path
+		def spec():
+			if not self.project:
+				return sel_project()
+			if os_path.exists(os_path.join(self.project.path, f'{self.project.name}.spec')):
+				return self.rc.error('Spec file already exists')
+			self.project.create_spec()
+
+		@self.com(Com('build', man="""build\nBuilds project on build_path"""))
+		def spec():
+			if not self.project:
+				return sel_project()
+			if not os_path.exists(os_path.join(self.project.path, f'{self.project.name}.spec')):
+				return self.rc.error('No spec file found (run `spec` command first)')
+			self.project.build()
+
 
 def main():
 	n = Ncui()
 	n.quick_run('version')
-	# n.quick_run('ip . Qwer')
 	n.quick_run_loop()
 	n.save()
 

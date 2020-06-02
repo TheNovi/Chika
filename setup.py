@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
 	name='chika',
-	version='0.6',
+	version='0.7',
 	include_package_data=True,
 	url='https://github.com/TheNovi/Chika',
 	license='MIT',
