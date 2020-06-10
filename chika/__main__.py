@@ -1,7 +1,6 @@
 import json
 import subprocess
 from os import path as os_path
-from sys import path as sys_path
 from typing import Optional
 
 import pkg_resources
@@ -16,7 +15,7 @@ from chika.project import Project
 class Ncui(Api):
 	def __init__(self):
 		super().__init__()
-		self.conf_path = os_path.join(sys_path[-1], 'chika')
+		self.conf_path = os_path.dirname(__file__)
 		self.global_conf = self.load()
 		self.project: Optional[Project] = self.in_project_dir()
 
@@ -49,6 +48,11 @@ class Ncui(Api):
 		@self.com(Com('version v', man="""version\nPrints Chika version"""))
 		def version():
 			return self.rc.quick(f'Chika v{pkg_resources.require("chika")[0].version}')
+
+		@self.com(Com('debug', man="""debug\nOpens chika in pip"""))
+		def debug():
+			subprocess.run(f'{self.global_conf.open_folder} .', cwd=self.conf_path, shell=True)
+			return self.rc.quick(f'{self.conf_path}')
 
 		@self.com(Com('ls lp', man="""ls\nPrints all saved projects"""))
 		def list_projects():
@@ -97,6 +101,10 @@ class Ncui(Api):
 
 		@self.com(Com('cscript cs', man="""cscript\nOpen cscript"""))
 		def cscript():
+			p = os_path.join(self.conf_path, 'cscript.txt')
+			if not os_path.exists(p):
+				with open(p, 'w') as f:
+					f.write(default_cscript)
 			subprocess.run(f'{self.global_conf.open_text} cscript.txt', cwd=self.conf_path, shell=True)
 
 		@self.com(Com('initp ip', man="""initp <path> <name>\nAdds new project and run cscript"""))  # TODO option with default path=. (only 1 arg: name)
@@ -255,7 +263,6 @@ cd {:name
 	echo [dev-packages]>> Pipfile
 	echo.>> Pipfile 
 	echo [packages]>> Pipfile
-	echo pyinstaller = "*">> Pipfile
 	echo.>> Pipfile 
 	echo [requires]>> Pipfile
 	echo python_version = "3.8">> Pipfile
