@@ -1,3 +1,4 @@
+from os.path import basename
 from typing import List
 
 
@@ -11,6 +12,10 @@ class ProjectConf:
 			'build_path': self.build_path,
 			'github': self.github
 		}
+
+	@staticmethod
+	def parse_name(path):
+		return basename(path)
 
 
 class GlobalConf:
@@ -34,3 +39,9 @@ class GlobalConf:
 
 	def gen_project(self) -> ProjectConf:
 		return ProjectConf(self.save())
+
+	def get_project(self, name):
+		for p in self.projects:
+			if ProjectConf.parse_name(p) == name:
+				return p
+		return None

@@ -15,7 +15,7 @@ class Project:
 
 	@property
 	def name(self):
-		return os_path.basename(self.path)
+		return ProjectConf.parse_name(self.path)
 
 	def run_cscript(self, cs: str, conf_path: str):
 		parse = []

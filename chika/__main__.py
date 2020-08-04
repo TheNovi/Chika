@@ -5,7 +5,7 @@ from typing import Optional
 
 import pkg_resources
 
-from chika.conf import GlobalConf
+from chika.conf import GlobalConf, ProjectConf
 from chika.ncui3.api import Api
 from chika.ncui3.com import Com
 from chika.ncui3.consts import RetCode
@@ -58,13 +58,14 @@ class Ncui(Api):
 		def list_projects():
 			o = []
 			for i, p in enumerate(self.global_conf.projects):
+				n = ProjectConf.parse_name(p)
 				if os_path.exists(p):
 					if os_path.exists(os_path.join(p, '.chika')):
-						o.append(f'{i}: {os_path.basename(p)}')
+						o.append(n)
 					else:
-						o.append(f'{i}: {os_path.basename(p)} - (missing .chika file)')
+						o.append(n + ' - (missing .chika file)')
 				else:
-					o.append(f'{i}: {os_path.basename(p)} - (invalid path)')
+					o.append(n + '- (invalid path)')
 			return self.rc.quick('\n'.join(o))
 
 		@self.com(Com('pwd', man="""pwd <path='.'>\nPrints real path (Same path will be parsed as project path)"""))
@@ -150,16 +151,17 @@ class Ncui(Api):
 			del self.global_conf.projects[i]
 			self.save()
 
-		@self.com(Com('oid openid', man="""openid <ls_id: int>\nOpen project"""))
+		@self.com(Com('cd cp o open select', man="""cd <name: str>\nOpen project"""))
 		def openid_():
 			if len(self.rc.args) != 2:
 				return self.rc.quick(f'1 args are required, found {len(self.rc.args) - 1}', RetCode.ARGS_ERROR)
-			i = self.rc.get_arg(1, -1, method=int)
-			if 0 > i or i >= len(self.global_conf.projects):
-				return self.rc.error('ls_id must be int: 0 <= ls_id < number_of_projects')
-			self.project = Project(self.global_conf, self.global_conf.projects[i])
-			self.project.save()
-			self.save()
+			name = self.rc.get_arg(1)
+			if p := self.global_conf.get_project(name):
+				self.project = Project(self.global_conf, p)
+				self.project.save()
+				self.save()
+			else:
+				return self.rc.error(f'No project found: \'{name}\'')
 
 		# In project
 		def sel_project():
