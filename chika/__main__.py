@@ -1,6 +1,7 @@
 import json
 import subprocess
 from os import path as os_path
+from sys import argv
 from typing import Optional
 
 import pkg_resources
@@ -225,8 +226,16 @@ class Ncui(Api):
 
 def main():
 	n = Ncui()
-	n.quick_run('version')
-	n.quick_run_loop()
+	if len(argv) == 1:  # No arg
+		n.quick_run('version')
+		n.quick_run_loop()
+	elif len(argv) == 2:  # One arg (build, github, version)
+		n.quick_run(argv[1])
+	elif len(argv) > 2:  # More args (project build) or (add .)
+		if n.global_conf.get_project(argv[1]):  # If first arg is project name
+			n.quick_run(f"cd {argv[1]} | {' '.join(argv[2:])}")
+		else:
+			n.quick_run(' '.join(argv[1:]))
 	n.save()
 
 
